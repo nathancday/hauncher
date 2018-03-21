@@ -3,7 +3,7 @@
 
 
 library(pacman)
-p_load(openxlsx, tidyverse, googlesheets)
+p_load(tidyverse, googlesheets)
 
 gs_auth() #authenticate with Google account
 
