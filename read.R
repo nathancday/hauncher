@@ -23,3 +23,4 @@ mysheets$sheet_title[2:1] %>%
 mysheets$sheet_title[2:1] %>%
   map_df(~ gs_title(.) %>% gs_read(ws = "Clients per day")) -> clients
 
+rm(mysheets)
