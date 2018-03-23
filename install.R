@@ -5,4 +5,5 @@ install.packages("pacman")
 
 library(pacman)
 
-p_load(caret, forecast, tidyverse, googlesheets) # ongoing list
+p_load(caret, forecast, tidyverse, googlesheets,
+       cowplot, lubridate) # ongoing list
