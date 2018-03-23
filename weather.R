@@ -15,3 +15,5 @@ weather <- rwunderground::history_range(location, date_start = "20170101", date_
 
 
 
+
+
