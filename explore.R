@@ -7,6 +7,7 @@ p_load(cowplot)
 
 a12 <- as_date("2017-08-12")
 
+
 # clients
 p1 <- ggplot(clients, aes(time, clients)) +
   geom_point(aes(color = time == a12)) +
@@ -32,5 +33,16 @@ freq <- inner_join(clients, sessions) %>%
 ggplot(freq, aes(time, norm_ses)) +
   geom_point() +
   geom_smooth()
+
+ggplot(freq, aes(clients, sessions)) +
+  geom_point()
+
+mod <- lm(sessions ~ clients, data = freq)
+summary(mod)
+
+hist(resid(mod), 30)
+
+freq[abs(resid(mod)) > 400, ]
+
 
 
