@@ -1,13 +1,9 @@
 # build time series objects for clients, sessions an usage
 # nathancday@gmail.com
 
-source("hauncher/clean.R")
+source("hauncher/explore.R")
 
-p_load(forecast)
-
-ggplot(clients, aes(time, clients)) +
-  geom_line() +
-  scale_x_date(date_breaks = "1 month")
+# p_load(forecast)
 
 client_ts <- ts(clients$clients)
 cts <- ts(clients$clients, 
@@ -74,4 +70,63 @@ fc <- ets(train)
 checkresiduals(fc)
 accuracy(forecast(fc, h = 7), cts)
 autoplot(forecast(fc))
+
+## auto.arima
+fc <- auto.arima(train)
+checkresiduals(fc)
+autoplot(forecast(fc))
+accuracy(forecast(fc, h = 7), cts)
+
+## box.cox transformation
+lmba <- BoxCox.lambda(train)
+bc_fc <- auto.arima(train, lambda = lmba)
+accuracy(forecast(bc_fc, h = 7), cts)
+
+ets_fc <- ets(train, lambda = lmba)
+accuracy(forecast(ets_fc, h = 7), cts)
+
+### Look at 4 hour intervals ----------------------------------------------------
+
+usage %<>% .[-1,] # first row in 2016 and empty
+usage$tod <- hour(usage$time)
+usage$day <- wday(usage$time, label = T)
+
+group_by(usage, day, tod) %>%
+  summarise(avg = mean(total)) %>%
+ggplot(aes(day, avg, fill = as.factor(tod))) +
+ geom_col()
+
+uts <- ts(usage$total, freq = 6)
+
+train <- window(uts, end = c(347,3))
+test <- window(uts, start = c(347,4))
+
+autoplot(train)
+
+ggAcf(train)
+
+ets_mod <- ets(train, damped = TRUE)
+autoplot(ets_mod)
+checkresiduals(ets_mod)
+
+fc <- forecast(ets_mod, 42)
+autoplot(fc)
+accuracy(fc, test)
+
+
+aa_mod <- auto.arima(train, lambda = .1)
+autoplot(aa_mod)
+checkresiduals(aa_mod)
+
+fc <- forecast(aa_mod, 42)
+autoplot(fc)
+accuracy(fc, test)
+
+autoplot(test)
+
+
+hist(test)
+
+train
+
 

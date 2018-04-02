@@ -4,8 +4,6 @@
 # start from here...
 source("hauncher/read.R")
 
-p_load(lubridate, magrittr)
-
 
 # clean names
 names(clients) %<>% tolower() %>% gsub("# ", "", .)

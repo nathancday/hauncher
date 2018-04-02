@@ -1,9 +1,9 @@
 # Install required packages via pacman method
 # samanthactoet@gmail.com
 
-install.packages("pacman")
+# install.packages("pacman")
 
 library(pacman)
 
 p_load(caret, forecast, tidyverse, googlesheets,
-       cowplot, lubridate, rwunderground) # ongoing list
+       cowplot, lubridate, rwunderground, viridis) # ongoing list

@@ -27,8 +27,7 @@ plot_grid(p1, p2, p3) # missing January, 2017 data for # sessions
 
 # group clients and sessions
 freq <- inner_join(clients, sessions) %>%
-  mutate(norm_ses = sessions / clients) %>% # sessions per client
-  filter(time > as_date("2017-02-01"))
+  mutate(norm_ses = sessions / clients)
 
 ggplot(freq, aes(time, norm_ses)) +
   geom_point() +
@@ -37,12 +36,30 @@ ggplot(freq, aes(time, norm_ses)) +
 ggplot(freq, aes(clients, sessions)) +
   geom_point()
 
-mod <- lm(sessions ~ clients, data = freq)
-summary(mod)
+# Impute missing month in Sessions via a model
 
-hist(resid(mod), 30)
+filter(freq, sessions == 0) %>% tail() # goes until Feb 1st
 
-freq[abs(resid(mod)) > 400, ]
+not_missing <- filter(freq, time > as_date("2017-02-01"))
+
+impt_mod <- lm(sessions ~ clients, data = not_missing)
+summary(impt_mod)
+
+new_data <- anti_join(freq, not_missing) %>% # sorts descending for some reason
+  arrange(time) %>% # so reorient
+  mutate(sessions = predict(impt_mod, .),
+         norm_ses = sessions / clients)
+
+freq <- bind_rows(new_data, not_missing)
+
+
+ggplot(freq, aes(clients, sessions)) +
+  geom_point()
+
+new_mod <- lm(sessions ~ clients, data = freq)
+summary(new_mod)
+
+freq %<>% select(-norm_ses)
 
 
 

@@ -5,16 +5,16 @@ source("hauncher/clean.R")
 
 # Documentation: https://cran.r-project.org/web/packages/rwunderground/rwunderground.pdf
 
-key <- set_api_key("98424ba247eed14b")
-
-location <- set_location(zip_code = "22902")
-
 # scrape data from API:
-weather <- history_range(location, date_start = "20170101", date_end = "20171227")
 
-# to save read in time saveRDS(weather, "hauncher/data/weather2017.csv")
+# ( commented to save time )
 
-weather <- readRDS("hauncher/data/weather2017.csv")
+# key <- set_api_key("98424ba247eed14b")
+# location <- set_location(zip_code = "22902")
+# weather <- history_range(location, date_start = "20170101", date_end = "20171227")
+# saveRDS(weather, "hauncher/data/weather.RDS")
+
+weather <- readRDS("hauncher/data/weather.RDS")
 
 ggplot(weather, aes(date, temp)) +
   geom_point(alpha = .1)
@@ -26,13 +26,18 @@ daily_condition <- function(day) {
   names(sort(table(day))[length(sort(table(day)))])
 }
 
-summarized <- weather %>% group_by(new_date) %>% 
+lil_weather <- weather %>% group_by(new_date) %>% 
   summarise(max_temp = max(temp), 
             min_temp = min(temp), 
             precip = sum(precip, na.rm = T),
             cond = daily_condition(cond))
 
 # visualize:
-ggplot(summarized, aes(new_date, max_temp, col = cond)) +
+ggplot(lil_weather, aes(new_date, max_temp, col = cond)) +
   geom_point()
+
+ggplot(lil_weather, aes(new_date, precip, col = cond)) +
+  geom_point()
+
+
 
