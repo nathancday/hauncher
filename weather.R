@@ -26,18 +26,46 @@ daily_condition <- function(day) {
   names(sort(table(day))[length(sort(table(day)))])
 }
 
-lil_weather <- weather %>% group_by(new_date) %>% 
+by_day <- weather %>% group_by(new_date) %>% 
   summarise(max_temp = max(temp), 
             min_temp = min(temp), 
             precip = sum(precip, na.rm = T),
             cond = daily_condition(cond))
 
 # visualize:
-ggplot(lil_weather, aes(new_date, max_temp, col = cond)) +
+ggplot(by_day, aes(new_date, max_temp, col = cond)) +
   geom_point()
 
-ggplot(lil_weather, aes(new_date, precip, col = cond)) +
-  geom_point()
+### Recode by_day$cond
+#  might want to move this earlier ^^^
+
+# collapse rain and show into Heavy/Light Precip
+by_day$cond %<>% gsub("((Freezing)? Rain| Snow)", " Precip", .) %>% gsub("  ", " ", .)
+
+#collapse Mostly cloudy as overcase
+by_day$cond %<>% gsub("Mostly Cloudy", "Overcast", .)
+
+# collapse other clouds as clean
+by_day$cond %<>% gsub(".* Cloud.*", "Clear", .)
+
+# drop Heavy/Light designation for Precip
+by_day$cond %<>% gsub(".* ", "", .)
 
 
+ggplot(by_day, aes(new_date, precip, col = cond)) +
+  geom_point() # recode based on precipitation
 
+### Recode by by_day$precip
+
+hist(by_day$precip, breaks = 15)
+by_day %<>% mutate(cond = case_when(precip > .1 ~ "Precip",
+                                   precip > 0 ~ "Overcast",
+                                   TRUE ~ as.character(cond)))
+
+
+# make sensible ordered factor
+by_day$cond %<>% as.ordered()
+
+table(by_day$cond)
+
+# saveRDS(by_day, "hauncher/data/weather_by_day.RDS")

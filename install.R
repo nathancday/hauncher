@@ -5,5 +5,5 @@
 
 library(pacman)
 
-p_load(caret, forecast, tidyverse, googlesheets,
+p_load(forecast, tidyverse, magrittr, googlesheets,
        cowplot, lubridate, rwunderground, viridis) # ongoing list
