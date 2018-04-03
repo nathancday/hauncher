@@ -9,7 +9,7 @@ source("hauncher/weather.R")
 head(freq) # from 'hauncher/explore.R'
 head(summarized) # from 'hauncher/weather.R
 
-dat <- inner_join(freq, summarized, by = c("time" = "new_date"))
+dat <- inner_join(freq, by_day, by = c("time" = "new_date"))
 dat$day <- wday(dat$time, label = TRUE)
 
 ggplot(dat, aes(time, clients, fill = max_temp, color = day)) +
