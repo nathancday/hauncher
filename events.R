@@ -42,5 +42,12 @@ events[["Pavillion"]] <- tibble(time = events[["Pavillion"]][[1]][time_index],
 
 events <- bind_rows(events, .id = "venue")
 
+### sum events by day
+# might want to weight this
+
+events %<>% count(time)
+events %<>% rename(num_events = n)
+
+
 saveRDS(events, "hauncher/data/events.RDS")
 

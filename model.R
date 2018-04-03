@@ -5,31 +5,31 @@
 
 source("hauncher/explore.R")
 source("hauncher/weather.R")
+source("hauncher/events.R")
 
 head(freq) # from 'hauncher/explore.R'
-head(summarized) # from 'hauncher/weather.R
+head(by_day) # from 'hauncher/weather.R
 
 dat <- inner_join(freq, by_day, by = c("time" = "new_date"))
+
+dat %<>% left_join(events)
+dat$num_events %<>% ifelse(is.na(.), 0, .) %>% as.factor()
+
 dat$day <- wday(dat$time, label = TRUE)
 
+# explore a bit here changing color
 ggplot(dat, aes(time, clients, fill = max_temp, color = day)) +
   geom_point(size = 3, shape = 21, stroke = 2) +
   scale_fill_viridis() +
   scale_color_brewer(palette = "Dark2")
 
-ggplot(dat, aes(max_temp, clients)) +
-  geom_point()
+### Prep for training --------------------------------------------------
 
-ggplot(dat, aes(min_temp, clients)) +
-  geom_point()
+dts <- ts(dat, frequency = 7) # formal ts object
 
-dat %<>% rowwise() %>% mutate(mean_temp = sum(max_temp, min_temp) / 2)
-
-ggplot(dat, aes(mean_temp, clients)) +
-  geom_point() +
-  stat_smooth()
-
-dts <- ts(dat, frequency = 7) # losing cond; need to convert to a factor
+# split for accuracy benchmarks
+train <- window(dts, end = c(50,3))
+test <- window(dts, start = c(50, 4))
 
 # a wraper for auto.arima for using formula syntax for xreg 
 xarima <- function(data, formula, ...) {
@@ -50,6 +50,7 @@ xarima <- function(data, formula, ...) {
 
 mod <- xarima(train, clients ~ max_temp)
 
+# custom forecast-like function for easy-use
 fx <- function(mod, new_data, h = 1, ...) {
   xregs <- new_data[, colnames(mod$xreg) ]
   forecast(mod, h = h, xreg = xregs, ...)
@@ -57,13 +58,6 @@ fx <- function(mod, new_data, h = 1, ...) {
 
 fx(mod, test)
 
-# split for training
-train <- window(dts, end = c(50,3))
-test <- window(dts, start = c(50, 4))
-
-xarima(train, clients ~ max_temp) %>%
-  forecast(1) %>%
-  accuracy(dts)
 
 autoplot(fx(mod, test))
 
