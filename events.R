@@ -12,7 +12,7 @@ gs_auth()
 
 mysheets <- gs_ls()
 
-events_sht <- mysheets$sheet_title[1] %>%
+events_sht <- filter(mysheets, grepl("^Events", sheet_title))$sheet_title %>%
   gs_title()
   
 events <- gs_ws_ls(events_sht) %>%
