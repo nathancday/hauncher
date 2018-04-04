@@ -1,10 +1,12 @@
-# Exploratory vizualizations
-# nathancday@gmail.com
+#' ----
+#' title: explore
+#' description: combine accessory data and hunt for correlation
+#' author: nathancday@gmail.com, samanthactoet@gmail.com
+#' ---
 
 source("hauncher/clean.R")
 source("hauncher/weather.R")
-
-p_load(cowplot)
+source("hauncher/events.R")
 
 a12 <- as_date("2017-08-12")
 

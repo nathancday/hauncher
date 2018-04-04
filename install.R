@@ -1,13 +1,19 @@
-# Install required packages via pacman method
-# samanthactoet@gmail.com
+#' ----
+#' title: clean
+#' description: all require container mods and R libraries
+#' author: samanthactoet@gmail.com
+#' ---
 
-# install.packages("pacman")
 
-## System libraries required
+## Required bash code
+
+# docker ps # find the ID of the running container you want to add a package to
+# a docker command to start a bash shell in your container
 # apt-get update
-# adpt-get install zlib1g-dev
+# apt-get install zlib1g-dev
 # apt-get install libxml2-dev
 
+# install.packages("pacman")
 library(pacman)
 
 p_load(forecast, tidyverse, magrittr, googlesheets,

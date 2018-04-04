@@ -16,8 +16,8 @@ source("hauncher/clean.R")
 
 weather <- readRDS("hauncher/data/weather.RDS")
 
-ggplot(weather, aes(date, temp)) +
-  geom_point(alpha = .1)
+# ggplot(weather, aes(date, temp)) +
+#   geom_point(alpha = .1)
 
 # summarize temps, precip, and condition by day:
 weather$new_date <- as.Date(weather$date)
@@ -32,12 +32,11 @@ by_day <- weather %>% group_by(new_date) %>%
             precip = sum(precip, na.rm = T),
             cond = daily_condition(cond))
 
-# visualize:
-ggplot(by_day, aes(new_date, max_temp, col = cond)) +
-  geom_point()
+# ggplot(by_day, aes(new_date, max_temp, col = cond)) +
+#   geom_point()
 
 ### Recode by_day$cond
-#  might want to move this earlier ^^^
+#  might want to move this earlier ^^^ later
 
 # collapse rain and show into Heavy/Light Precip
 by_day$cond %<>% gsub("((Freezing)? Rain| Snow)", " Precip", .) %>% gsub("  ", " ", .)
@@ -52,20 +51,21 @@ by_day$cond %<>% gsub(".* Cloud.*", "Clear", .)
 by_day$cond %<>% gsub(".* ", "", .)
 
 
-ggplot(by_day, aes(new_date, precip, col = cond)) +
-  geom_point() # recode based on precipitation
+# ggplot(by_day, aes(new_date, precip, col = cond)) +
+#   geom_point() # recode based on precipitation
 
 ### Recode by by_day$precip
 
-hist(by_day$precip, breaks = 15)
+# hist(by_day$precip, breaks = 15)
+
 by_day %<>% mutate(cond = case_when(precip > .1 ~ "Precip",
-                                   precip > 0 ~ "Overcast",
-                                   TRUE ~ as.character(cond)))
+                                    precip > 0 ~ "Overcast",
+                                    TRUE ~ as.character(cond)))
 
 
 # make sensible ordered factor
 by_day$cond %<>% as.ordered()
 
-table(by_day$cond)
+# table(by_day$cond)
 
 # saveRDS(by_day, "hauncher/data/weather_by_day.RDS")

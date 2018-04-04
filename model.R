@@ -1,11 +1,10 @@
 #' ----
-#' title: model.R
-#' author: Nathan Day
+#' title: model
+#' description: test seasonal models for prediction accuracy
+#' author: nathancday@gmail.com
 #' ---
 
 source("hauncher/explore.R")
-source("hauncher/weather.R")
-source("hauncher/events.R")
 
 head(freq) # from 'hauncher/explore.R'
 head(by_day) # from 'hauncher/weather.R

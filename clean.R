@@ -1,7 +1,9 @@
-# Clean up raw character strings to proper dates
-# nathancday@gmail.com
+#' ----
+#' title: clean
+#' description: date parsing plus nice names
+#' author: nathancday@gmail.com
+#' ---
 
-# start from here...
 source("hauncher/read.R")
 
 
@@ -9,7 +11,6 @@ source("hauncher/read.R")
 names(clients) %<>% tolower() %>% gsub("# ", "", .)
 names(sessions) %<>% tolower() %>% gsub("# ", "", .)
 names(usage) %<>% tolower() %>% gsub(" .*", "", .)
-
 
 # clean dates
 clients$time %<>% as_date()

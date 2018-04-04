@@ -1,9 +1,10 @@
-# build time series objects for clients, sessions an usage
-# nathancday@gmail.com
+#' ----
+#' title: timeseries
+#' description: build ts objects from raw data via library(forecast)
+#' author: nathan day
+#' ---
 
 source("hauncher/explore.R")
-
-# p_load(forecast)
 
 client_ts <- ts(clients$clients)
 cts <- ts(clients$clients, 
