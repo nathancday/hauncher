@@ -51,3 +51,5 @@ events %<>% rename(num_events = n)
 
 saveRDS(events, "hauncher/data/events.RDS")
 
+rm(events_sht, show_index, time_index, mysheets)
+

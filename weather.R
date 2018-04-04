@@ -27,9 +27,9 @@ daily_condition <- function(day) {
 }
 
 by_day <- weather %>% group_by(new_date) %>% 
-  summarise(max_temp = max(temp), 
-            min_temp = min(temp), 
-            precip = sum(precip, na.rm = T),
+  summarise(max_temp = max(temp, na.rm = TRUE), 
+            min_temp = min(temp, na.rm = TRUE), 
+            precip = sum(precip, na.rm = TRUE),
             cond = daily_condition(cond))
 
 # ggplot(by_day, aes(new_date, max_temp, col = cond)) +

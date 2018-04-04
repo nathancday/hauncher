@@ -4,7 +4,6 @@
 #' author: nathancday@gmail.com, samanthactoet@gmail.com
 #' ---
 
-source("hauncher/clean.R")
 source("hauncher/weather.R")
 source("hauncher/events.R")
 
@@ -27,6 +26,8 @@ p3 <- ggplot(usage, aes(time, total)) +
   stat_smooth()
  
 plot_grid(p1, p2, p3) # missing January, 2017 data for # sessions
+
+rm(p1,p2,p3, a12)
 
 # group clients and sessions
 freq <- inner_join(clients, sessions) %>%
@@ -55,12 +56,14 @@ new_data <- anti_join(freq, not_missing) %>% # sorts descending for some reason
 
 freq <- bind_rows(new_data, not_missing) # putting it back together again
 
+rm(not_missing, new_data, impute_mod)
 
 ggplot(freq, aes(clients, sessions)) +
   geom_point()
 
 new_mod <- lm(sessions ~ clients, data = freq)
 summary(new_mod)
+rm(new_mod)
 
 freq %<>% select(-norm_ses)
 
@@ -111,3 +114,5 @@ ma2 <- lm(clients ~ max_temp + day + cond, data = dat) # precip's not worth it
 
 
 anova(m0, ma, ma2)
+
+rm(dat, m0, ma, ma2)

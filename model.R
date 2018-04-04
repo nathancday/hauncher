@@ -15,6 +15,7 @@ dat %<>% left_join(events)
 dat$num_events %<>% ifelse(is.na(.), 0, .) %>% as.factor()
 
 dat$day <- wday(dat$time, label = TRUE)
+dat$week <- week(dat$time)
 
 # explore a bit here changing color
 ggplot(dat, aes(time, clients, fill = max_temp, color = day)) +
@@ -48,6 +49,7 @@ xarima <- function(data, formula, ...) {
 }
 
 mod <- xarima(train, clients ~ max_temp)
+mod1 <- xarima(train, clients ~ max_temp, stepwise = FALSE)
 
 # custom forecast-like function for easy-use
 fx <- function(mod, new_data, h = 1, ...) {
@@ -55,12 +57,9 @@ fx <- function(mod, new_data, h = 1, ...) {
   forecast(mod, h = h, xreg = xregs, ...)
 }
 
-fx(mod, test)
-
-
-autoplot(fx(mod, test))
-
 accuracy(fx(mod, test), test[, "clients"])
+accuracy(fx(mod1, test), test[, "clients"]) # slightly better
+
 
 ets_mod <- ets(train[,"clients"])
 ets_fc <- forecast(ets_mod)
@@ -77,5 +76,36 @@ mod_bc <- xarima(train, clients ~ max_temp, lambda = l)
 accuracy(fx(mod_bc, test), test[, "clients"])
 
 
+# retest best with more predictors from explore.R
+mod2 <- xarima(train, clients ~ max_temp + cond)
+mod3 <- xarima(train, clients ~ max_temp + day) # new best
+mod4 <- xarima(train, clients ~ max_temp + day + precip)
+mod5 <- xarima(train, clients ~ max_temp + day + num_events)
+
+accuracy(fx(mod, test), test[, "clients"]) # best from earlier
+accuracy(fx(mod2, test), test[, "clients"]) 
+accuracy(fx(mod3, test), test[, "clients"]) # better than best
+accuracy(fx(mod4, test), test[, "clients"]) # not as good
+accuracy(fx(mod3, test), test[, "clients"]) # not as good
+
+mod3 <- xarima(train, clients ~ max_temp + day) # new best
+mod3s <- xarima(train, clients ~ max_temp + day, step = FALSE) # same???
+
+accuracy(fx(mod3, test), test[, "clients"])
+
+# check on a bunch of next weeks
+
+# custom function to help
+mape <- function(...) { accuracy(...)[,"MAPE"][1] }
+mape(fx(mod3, test), test[, "clients"]) # show it off
+
+dat_cv <- tibble(week = 30:50) %>%
+  mutate(train_dat = map(week, ~ window(dts, end = c(., 3))),
+         test_dat = map(week, ~ window(dts, start = c(., 4), stop = c(., 3))),
+         mod0 = map(train_dat, ~ auto.arima(.[,"clients"])),
+         modA = map(train_dat, ~ xarima(., clients ~ max_temp + day)),
+         acc0 = map2_dbl(mod0, test_dat, ~mape(forecast(..1, ..2), ..2[,"clients"])),
+         accA = map2_dbl(modA, test_dat, ~mape(fx(..1, ..2), ..2[,"clients"])))
 
 
+select(dat_cv, -train_dat, -test_dat) %>% with(plot(acc0, accA))
