@@ -1,0 +1,28 @@
+---
+title: "Storytelling with Wifi Data"
+output: html_document
+---
+
+What influences the use of WiFi data on the Downtown mall? Are people more likely to work outside when it's nicer out? If so, what about the weather - high temps, clear skies - has the greatest influence? Or are people more likely to use the WiFi socially, like at an event or while out to dinner? With the WiFi data from the Astrea Open Data challenge we decided to investigate further.
+
+Something about rocker install.
+
+We started off with raw data representing Downtown Mall wifi usage in the form of Google Sheets showing the number of unique clients, sessions, and overall data usage for each day of 2017. We loaded in and tidied the data to...
+
+```{r}
+show what the new data frame looks like
+```
+
+We made the data a time series showing date and day of the week
+
+We made a model 
+
+We loaded in weather to look at date, condition, max temp, min temp, and precipitation. 
+
+We compared weather with usage
+
+We made some predictions 
+
+
+
+
