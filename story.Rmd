@@ -3,25 +3,36 @@ title: "Storytelling with Wifi Data"
 output: html_document
 ---
 
-What influences the use of WiFi data on the Downtown mall? Are people more likely to work outside when it's nicer out? If so, what about the weather - high temps, clear skies - has the greatest influence? Or are people more likely to use the WiFi socially, like at an event or while out to dinner? With the WiFi data from the Astrea Open Data challenge we decided to investigate further.
+What influences the use of WiFi data on the Downtown mall? Are people more likely to work outside when it's nicer out? If so, what about the weather - high temps, clear skies - has the greatest influence? Or are people more likely to use the WiFi socially - like at an event or while out to dinner? Does day of the week affect WiFi usage? With the WiFi data from the Astrea Open Data challenge we decided to investigate further.
 
-Something about rocker install.
 
-We started off with raw data representing Downtown Mall wifi usage in the form of Google Sheets showing the number of unique clients, sessions, and overall data usage for each day of 2017. We loaded in and tidied the data to...
+We started off with raw data representing Downtown Mall wifi usage in the form of Google Sheets showing the number of unique clients, sessions, and overall data usage for each day of 2017. We loaded in and tidied the data to reflect a time-series model. 
 
-```{r}
-show what the new data frame looks like
-```
+- picture of time series model
 
-We made the data a time series showing date and day of the week
+We predicted that weather and day of the week would have the greatest influence on wifi usage. The question is though, what aspects of the weather influence the wifi usage, and to what extent? Are people more likely to use the wifi during the day, for work (i.e. working at a coffee shop), in the evening, like out to dinner or at a concert, or during the weekend?
 
-We made a model 
+The weather data consisted of min temp, max temp, precipitation (in inches), and overall condition. 
 
-We loaded in weather to look at date, condition, max temp, min temp, and precipitation. 
+- picture of weather data
 
-We compared weather with usage
+First we thought precipitation would be the biggest predictor, so we tested that. It turned out that it was actually condition that had the biggest effect. 
 
-We made some predictions 
+- picture of combined data
+
+What about event data? We loaded the dates of some concerts at the Pavillian and the Jefferson and some other pertinent events (TomTom fest, A12). It looks like wifi usage didn't really go up when these events were taking place. We looked at weekends though, and it seems that had some influence. 
+
+- picture of event data
+
+Overall it looks like weather and day of the week has the biggest influence of WiFi data. 
+
+Next steps/how can the city use this:
+
+- it looks like people use the wifi during the day the most, i.e. at a coffee shop or something. Maybe the city could provide more patio space or public seating like picnic tables on the mall and within wifi range. 
+
+- weather does influence Downtown Mall access so maybe install some patio coverings? 
+
+ 
 
 
 
