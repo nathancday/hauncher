@@ -128,6 +128,11 @@ autoplot(test)
 
 hist(test)
 
-train
+### * Repeat for usage data
 
+usage %<>% .[-1, ] # drop first obs empty and from 2016
+
+hist(usage$total)
+
+filter(usage, total == 0) %>% View
 

@@ -69,3 +69,33 @@ by_day$cond %<>% as.ordered()
 # table(by_day$cond)
 
 # saveRDS(by_day, "hauncher/data/weather_by_day.RDS")
+
+
+### Repeat for 4 hour intervals --------------
+
+
+# re-summariese using day and 4 hour chunks
+weather$hour <- hour(weather$date)
+
+filter(weather, is.na(hour))
+
+chunk_dc <- rep(1:6, each = 4) %>% set_names(0:23)
+
+weather$chunk <- chunk_dc[weather$hour + 1]
+
+
+by_4hour <- group_by(weather, new_date, chunk) %>%
+  summarise(max_temp = max(temp, na.rm = TRUE), 
+            min_temp = min(temp, na.rm = TRUE), 
+            precip = sum(precip, na.rm = TRUE),
+            cond = daily_condition(cond))
+
+chunk_rc <- seq(2,22, 4) %>% set_names(1:6)
+
+by_4hour$hour <- chunk_rc[by_4hour$chunk]
+table(by_4hour$hour)
+
+by_4hour$time <- as_datetime(paste0(by_4hour$new_date," ", by_4hour$hour, ":00:00" ))
+
+
+
