@@ -116,3 +116,7 @@ ma2 <- lm(clients ~ max_temp + day + cond, data = dat) # precip's not worth it
 anova(m0, ma, ma2)
 
 rm(dat, m0, ma, ma2)
+
+
+### Usage ----------------------------------------------------------------
+

@@ -50,31 +50,31 @@ mod_clients <- xarima(dts, clients ~ max_temp + day)
 
 fc_clients <- tibble(Daytime = test_df$new_date,
                      Prediction = as.numeric(fx(mod_clients, test)$mean))
-write.csv(fc_clients, "hauncher/predictions/clients.csv")
+# write.csv(fc_clients, "hauncher/predictions/clients.csv")
 
 ### Sessions ---------------
 mod_session <- xarima(dts, sessions ~ max_temp + day)
 
 fc_session <- tibble(Daytime = test_df$new_date,
                      Prediction = as.numeric(fx(mod_session, test)$mean))
-write.csv(fc_session, "hauncher/predictions/sessions.csv")
+# write.csv(fc_session, "hauncher/predictions/sessions.csv")
 
 ### Usage ---------------
 
-usage <- inner_join(usage, by_4hour)
-usage$kb <- usage$total / (2^10)
+usagew <- inner_join(usage, by_4hour)
+usagew$kb <- usagew$total / (2^10)
 
-test2 <- anti_join(by_4hour, usage) %>%
+test2 <- anti_join(by_4hour, usagew) %>%
   filter(time > as_date("2017-12-21"), time < as_date("2017-12-28"))
 
-uts <- ts(usage$kb, frequency = 6)
+uts <- msts(usagew$kb, seasonal.periods =  c(6, 42))
 
-autoplot(uts)
-
-mod <- auto.arima(uts, D = 1)
+mod <- auto.arima(uts, D = 1, stepwise = FALSE, parallel = TRUE)
 
 fc_usage <- tibble(Daytime = test2$time,
                      Prediction = as.numeric(forecast(mod, h = 42)$mean))
+fc_usage$Prediction %<>% ifelse(. < 0, 0, .)
+
 write.csv(fc_usage, "hauncher/predictions/usage.csv")
 
 

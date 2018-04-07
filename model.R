@@ -23,7 +23,7 @@ ggplot(dat, aes(time, clients, fill = max_temp, color = day)) +
   scale_fill_viridis() +
   scale_color_brewer(palette = "Dark2")
 
-### Prep for training --------------------------------------------------
+### Learn with Clients --------------------------------------------------
 
 dts <- ts(dat, frequency = 7) # formal ts object
 
@@ -118,6 +118,7 @@ select(dat_cv, -train_dat, -test_dat) %>% with(plot(acc0, accA))
 
 fx(mod3, test) %>% autoplot
 
+### Sessions ------------------------------------------------------
 
 # rinse and repeat, for session
 head(dts)
@@ -133,33 +134,103 @@ dat_cvs <- tibble(week = 30:50) %>% # lol
 select(dat_cvs, -train_dat, -test_dat) %>% with(plot(acc0, accA))
 # still better than auto.arima
 
-# rinse and super repeat for usage in 4hr blocks
-head(usage)
+### Usage --------------------------------------------------------------
 
-# drop first obs from 2016
-usage %<>% .[-1, ]
+# rework for usage b/c 4hr blocks
 
 head(usage)
-usage <- inner_join(usage, by_4hour)
-usage$kb <- usage$total / (2^10)
+usage %<>% .[-1, ] # drop first obs from 2016
+head(usage)
 
-usage$day <- wday(usage$time, label = TRUE)
-usage$week <- week(usage$time)
-test <- anti_join(by_4hour, usage) %>%
-  filter(time > as_date("2017-12-21"), time < as_date("2017-12-28"))
-test$day <- wday(test$time, label = TRUE)
+usagew <- inner_join(usage, by_4hour) # join weather data
+usagew$kb <- usagew$total / (2^10) # convert B to kB :)
+
+usagew$day <- wday(usagew$time, label = TRUE) # rebuild day labels
+usagew$week <- week(usagew$time) # build similar val for week
+
+# split into test and train
+test <- filter(usagew, between(time, as_datetime("2017-12-12 00:00:00"), max(time)))
+train <- anti_join(usagew, test)
+lil_train <- filter(train, between(time, as_datetime("2017-12-12 00:00:00"), max(time) )
+
 
 # usage  %<>% filter(complete.cases(.))
 # 
 # usage %<>% group_by(new_date) %>%
 #   filter(n() == 6)
 
-uts <- ts(usage$kb, frequency = 6)
+uts <- ts(train$kb, frequency = 6)
+mts <- msts(train$kb, seasonal.periods = c(6,42))
 
-autoplot(uts)
+
+# write an optimizer for k
+
+
+uff <- fourier(uts, K = 1)
+mff <- fourier(mts, K = c(3, 3))
 
 mod <- auto.arima(uts, D = 1)
 
+autoplot(forecast(mod, h = 42)) + 
+  scale_x_continuous(limits = c(335,NA))
 
-autoplot(forecast(mod, h = 42))
+summary(mod)
+map( 1:3, ~ auto.arima(uts, xreg = fourier(uts, K = .), seasonal = FALSE) %>% 
+  summary()  )
 
+nff <- fourier(uts, K = 3, h = 6*7)
+autoplot(forecast(fmod, h = 42, xreg = nff)) + 
+  scale_x_continuous(limits = c(335,NA))
+
+mod2 <- auto.arima(mts, D = 1)
+mod3 <- auto.arima(mts, D = 1, stepwise = FALSE, parallel = TRUE)
+
+summary(mod2)
+summary(mod3)
+
+
+autoplot(forecast(mod3, h = 42)) + 
+  scale_x_continuous(limits = c(45,NA))
+
+fc <- function(mod, h = 2, ...){as.numeric(forecast(mod, h = h)[["mean"]])}
+
+fc(mod3)
+fc(mod)
+
+accuracy(fc(mod3), test$kb)
+plot(fc(mod3, h = 54), test$kb)
+
+ubd <- group_by(usagew, time = new_date) %>%
+  summarise(kb = max(kb)) %>%
+  inner_join(dat)
+
+ubd %>% select(time, max_temp, kb, clients, sessions) %>%
+  gather(k, v, -time, -max_temp) %>%
+ggplot(aes(time, v, color = max_temp)) +
+  geom_point() +
+  facet_wrap(~k,scales = "free")
+
+ggplot(ubd, aes(time, kb, color = clients)) +
+  geom_point(size = 3)
+
+ggplot(ubd, aes(time, kb, color = sessions)) +
+  geom_point(size = 3)
+
+ggplot(ubd, aes(time, kb, color = num_events)) +
+  geom_point(size = 3)
+
+ggplot(tail(ubd,40), aes(time, kb, color = max_temp)) +
+  geom_point(size = 3) +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d")
+
+
+ubd %>% tail(40) %>%
+  select(time, max_temp, kb, clients, sessions) %>%
+  gather(k, v, -time, -max_temp) %>%
+  ggplot(aes(time, v, color = max_temp)) +
+  geom_point() +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d") +
+  facet_wrap(~k, scales = "free", ncol = 1)
+
+hist(ubd$kb)
+range(ubd$kb)
