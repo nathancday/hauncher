@@ -13,6 +13,9 @@ dat <- inner_join(freq, by_day, by = c("time" = "new_date"))
 dat$day <- wday(dat$time, label = TRUE)
 dat$week <- week(dat$time)
 
+# Turkey day
+tday <- filter(dat, time == as_date("2017-11-23"))
+
 dts <- ts(dat, frequency = 7)
 
 
@@ -50,20 +53,39 @@ mod_clients <- xarima(dts, clients ~ max_temp + day)
 
 fc_clients <- tibble(Daytime = test_df$new_date,
                      Prediction = as.numeric(fx(mod_clients, test)$mean))
-# write.csv(fc_clients, "hauncher/predictions/clients.csv")
+
+# guess an Xmas drop based on Thanksgiving
+fc_clients %<>% mutate( Prediction = ifelse(Daytime == as_date("2017-12-25"), tday$clients, Prediction))
+
+ggplot(fc_clients, aes(Daytime, Prediction)) +
+  geom_point()
+
+write.csv(fc_clients, "hauncher/predictions/clients.csv")
 
 ### Sessions ---------------
 mod_session <- xarima(dts, sessions ~ max_temp + day)
 
 fc_session <- tibble(Daytime = test_df$new_date,
                      Prediction = as.numeric(fx(mod_session, test)$mean))
-# write.csv(fc_session, "hauncher/predictions/sessions.csv")
+
+# guess an Xmas drop based on Thanksgiving
+fc_session %<>% mutate( Prediction = ifelse(Daytime == as_date("2017-12-25"), tday$sessions, Prediction))
+
+ggplot(fc_session, aes(Daytime, Prediction)) +
+  geom_point()
+
+write.csv(fc_session, "hauncher/predictions/sessions.csv")
 
 ### Usage ---------------
 
 usagew <- inner_join(usage, by_4hour)
 usagew$kb <- usagew$total / (2^10)
+usagew$kb %<>% ifelse(. < .1, .1, .)
 
+# Turkey day2
+tday2 <- filter(usagew, between(time, as_datetime("2017-11-22 18:00:00"), as_datetime("2017-11-24 02:00:00")))
+
+# for final csv formatting 'ease'
 test2 <- anti_join(by_4hour, usagew) %>%
   filter(time > as_date("2017-12-21"), time < as_date("2017-12-28"))
 
@@ -72,8 +94,23 @@ uts <- msts(usagew$kb, seasonal.periods =  c(6, 42))
 mod <- auto.arima(uts, D = 1, stepwise = FALSE, parallel = TRUE)
 
 fc_usage <- tibble(Daytime = test2$time,
-                     Prediction = as.numeric(forecast(mod, h = 42)$mean))
-fc_usage$Prediction %<>% ifelse(. < 0, 0, .)
+                   Prediction = as.numeric(forecast(mod, h = 42)$mean))
+
+# guess the Xmas drop based on Thanksgiving
+xmas <- filter(fc_usage, between(Daytime, as_datetime("2017-12-24 18:00:00"), as_datetime("2017-12-26 02:00:00") ) )
+fc_usage %<>% anti_join(xmas)
+xmas$Prediction <- tday2$kb
+
+fc_usage %<>% bind_rows(xmas) %>% arrange(Daytime)
+
+
+ggplot(fc_usage, aes(Daytime, Prediction)) +
+  geom_point()
+
+
+fc_usage$Prediction %<>% ifelse(. < .1, .1, .)
+
+
 
 write.csv(fc_usage, "hauncher/predictions/usage.csv")
 

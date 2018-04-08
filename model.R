@@ -23,6 +23,13 @@ ggplot(dat, aes(time, clients, fill = max_temp, color = day)) +
   scale_fill_viridis() +
   scale_color_brewer(palette = "Dark2")
 
+
+ggplot(tail(dat, 40), aes(time, clients, fill = max_temp, color = day)) +
+  geom_point(size = 3, shape = 21, stroke = 2) +
+  scale_fill_viridis() +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d")
+
 ### Learn with Clients --------------------------------------------------
 
 dts <- ts(dat, frequency = 7) # formal ts object
@@ -102,7 +109,7 @@ accuracy(forecast(modT), test[, "clients"])
 # check on a bunch of next weeks
 
 # custom function to help
-mape <- function(...) { accuracy(...)[,"MAPE"][1] }
+mape <- function(...) { accuracy(...)[,"MAPE"][2] }
 mape(fx(mod3, test), test[, "clients"]) # show it off
 
 dat_cv <- tibble(week = 30:50) %>%
@@ -144,14 +151,18 @@ head(usage)
 
 usagew <- inner_join(usage, by_4hour) # join weather data
 usagew$kb <- usagew$total / (2^10) # convert B to kB :)
+usagew$kb %<>% ifelse(.<.1, .1, .)
 
 usagew$day <- wday(usagew$time, label = TRUE) # rebuild day labels
 usagew$week <- week(usagew$time) # build similar val for week
 
+# usage correlated to sessions
+usagew %<>% inner_join(select(dat, time, sessions), by = c("new_date"="time"))
+
 # split into test and train
 test <- filter(usagew, between(time, as_datetime("2017-12-12 00:00:00"), max(time)))
 train <- anti_join(usagew, test)
-lil_train <- filter(train, between(time, as_datetime("2017-12-12 00:00:00"), max(time) )
+lil_train <- filter(train, between(time, as_datetime("2017-12-04 00:00:00"), max(time)) )
 
 
 # usage  %<>% filter(complete.cases(.))
@@ -161,9 +172,6 @@ lil_train <- filter(train, between(time, as_datetime("2017-12-12 00:00:00"), max
 
 uts <- ts(train$kb, frequency = 6)
 mts <- msts(train$kb, seasonal.periods = c(6,42))
-
-
-# write an optimizer for k
 
 
 uff <- fourier(uts, K = 1)
@@ -188,17 +196,22 @@ mod3 <- auto.arima(mts, D = 1, stepwise = FALSE, parallel = TRUE)
 summary(mod2)
 summary(mod3)
 
-
 autoplot(forecast(mod3, h = 42)) + 
   scale_x_continuous(limits = c(45,NA))
 
-fc <- function(mod, h = 2, ...){as.numeric(forecast(mod, h = h)[["mean"]])}
+fc <- function(mod, h = 2, ...){
+  forecast(mod, h = h)[["mean"]] %>%
+    as.numeric() %>%
+    ifelse(. < 0, 0.1, .) }
 
-fc(mod3)
+fc(mod3, h = 45)
 fc(mod)
 
-accuracy(fc(mod3), test$kb)
+accuracy(fc(mod3, h = 54), test$kb)
 plot(fc(mod3, h = 54), test$kb)
+
+mean( ( test$kb - fc(mod3, h = 54) ) / test$kb )* 100/54
+
 
 ubd <- group_by(usagew, time = new_date) %>%
   summarise(kb = max(kb)) %>%
@@ -210,27 +223,28 @@ ggplot(aes(time, v, color = max_temp)) +
   geom_point() +
   facet_wrap(~k,scales = "free")
 
-ggplot(ubd, aes(time, kb, color = clients)) +
-  geom_point(size = 3)
 
-ggplot(ubd, aes(time, kb, color = sessions)) +
-  geom_point(size = 3)
-
-ggplot(ubd, aes(time, kb, color = num_events)) +
-  geom_point(size = 3)
-
-ggplot(tail(ubd,40), aes(time, kb, color = max_temp)) +
-  geom_point(size = 3) +
-  scale_x_date(date_breaks = "1 day", date_labels = "%d")
+cor.test(ubd$kb, ubd$sessions) # more correlated
+cor.test(ubd$kb, ubd$clients)
 
 
-ubd %>% tail(40) %>%
-  select(time, max_temp, kb, clients, sessions) %>%
+
+
+# Holiday effects -----
+lil <- tail(ubd, 40)
+
+select(lil, time, max_temp, kb, clients, sessions) %>%
   gather(k, v, -time, -max_temp) %>%
   ggplot(aes(time, v, color = max_temp)) +
   geom_point() +
   scale_x_date(date_breaks = "1 day", date_labels = "%d") +
   facet_wrap(~k, scales = "free", ncol = 1)
 
-hist(ubd$kb)
-range(ubd$kb)
+filter(ubd, kb == min(kb))
+
+# use Thanksgiving day value for Xmas day
+filter(ubd, time == as_date("2017-11-23"))
+
+
+
+
